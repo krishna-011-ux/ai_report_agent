@@ -21,7 +21,7 @@ import os
 import tempfile
 import io
 
-from processing.cleaner import clean_data
+from cleaner import clean_data
 from ai_agent.analyzer import generate_insights
 from reports.excel_report import generate_excel_report
 from reports.pdf_report import generate_pdf_report
