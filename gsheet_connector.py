@@ -1,14 +1,18 @@
 """
 Google Sheets Connector
 -----------------------
-Google Sheets se live data padhta hai gspread library ke through.
+Reads live data from Google Sheets using the gspread library.
 
-Setup (ek baar karna hai):
-1. Google Cloud Console mein ek Service Account banao
-2. Google Sheets API + Google Drive API enable karo
-3. Service account ki JSON key download karo -> config/gcreds.json mein rakho
-4. Apni Google Sheet ko us service account ke email ke saath "Share" karo (Viewer access)
-5. config.yaml mein sheet_id daalo (URL se: docs.google.com/spreadsheets/d/<SHEET_ID>/edit)
+Setup (one-time configuration):
+1. Create a Service Account in Google Cloud Console.
+2. Enable the Google Sheets API and Google Drive API.
+3. Download the Service Account JSON key and save it as
+   config/gcreds.json.
+4. Share your Google Sheet with the Service Account email address
+   with Viewer access.
+5. Add the sheet_id to config.yaml. You can find the SHEET_ID in
+   the Google Sheets URL:
+   docs.google.com/spreadsheets/d/<SHEET_ID>/edit
 """
 
 import pandas as pd
@@ -21,16 +25,34 @@ class GSheetConnector(BaseConnector):
         from google.oauth2.service_account import Credentials
 
         cfg = self.config["gsheet"]
-        scopes = ["https://www.googleapis.com/auth/spreadsheets.readonly",
-                  "https://www.googleapis.com/auth/drive.readonly"]
 
-        creds = Credentials.from_service_account_file(cfg["credentials_file"], scopes=scopes)
+        scopes = [
+            "https://www.googleapis.com/auth/spreadsheets.readonly",
+            "https://www.googleapis.com/auth/drive.readonly"
+        ]
+
+        creds = Credentials.from_service_account_file(
+            cfg["credentials_file"],
+            scopes=scopes
+        )
+
         client = gspread.authorize(creds)
 
-        print(f"[GSheetConnector] Opening sheet: {cfg['sheet_id']}")
-        sheet = client.open_by_key(cfg["sheet_id"])
-        worksheet = sheet.worksheet(cfg.get("worksheet_name", "Sheet1"))
+        print(
+            f"[GSheetConnector] Opening spreadsheet: "
+            f"{cfg['sheet_id']}"
+        )
+
+        sheet = client.open_by_key(
+            cfg["sheet_id"]
+        )
+
+        worksheet = sheet.worksheet(
+            cfg.get("worksheet_name", "Sheet1")
+        )
 
         records = worksheet.get_all_records()
+
         df = pd.DataFrame(records)
+
         return self.validate(df)
