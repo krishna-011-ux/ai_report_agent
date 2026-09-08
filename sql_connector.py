@@ -1,6 +1,6 @@
 """
-SQL Connector - kisi bhi SQL database (PostgreSQL, MySQL, SQLite) se
-data read karta hai SQLAlchemy connection string ke through.
+SQL Connector - Reads data from SQL databases such as
+PostgreSQL, MySQL, and SQLite using SQLAlchemy connection strings.
 
 Example connection strings:
   SQLite     : sqlite:///path/to/db.db
@@ -18,8 +18,12 @@ class SQLConnector(BaseConnector):
         cfg = self.config["sql"]
         conn_str = cfg["connection_string"]
         query = cfg["query"]
-        print(f"[SQLConnector] Connecting to DB and running query...")
+
+        print("[SQLConnector] Connecting to the database and executing query...")
+
         engine = create_engine(conn_str)
+
         with engine.connect() as conn:
             df = pd.read_sql(query, conn)
+
         return self.validate(df)
