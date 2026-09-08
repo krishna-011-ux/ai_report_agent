@@ -1,17 +1,17 @@
 """
 Scheduler
 ---------
-Ye script pipeline ko automatically, bina manual run kiye, schedule
-ke hisaab se chalata rehta hai (daily/weekly/monthly).
+This script automatically runs the pipeline according to a defined
+schedule without requiring manual execution (daily/weekly/monthly).
 
 Usage:
     python scheduler.py
 
-Isko production mein 24/7 chalane ke liye:
-  - Ek chhoti VM/server pe background process (nohup / systemd service) ki tarah chalao, YA
-  - Cron job set kar do (Linux): crontab -e
+For running continuously in production:
+  - Run it as a background process (nohup / systemd service) on a VM/server, OR
+  - Set up a cron job (Linux): crontab -e
         0 9 * * * cd /path/to/project && python main.py
-  - Cloud pe: AWS Lambda + EventBridge, ya GitHub Actions scheduled workflow
+  - On the cloud: AWS Lambda + EventBridge, or a GitHub Actions scheduled workflow
 """
 
 import time
@@ -30,7 +30,10 @@ def start_scheduler():
     sched_cfg = config.get("schedule", {})
 
     if not sched_cfg.get("enabled", False):
-        print("Scheduler config mein disabled hai. config.yaml mein schedule.enabled: true karo.")
+        print(
+            "Scheduler is disabled in the configuration. "
+            "Set schedule.enabled: true in config.yaml."
+        )
         return
 
     frequency = sched_cfg.get("frequency", "daily")
@@ -38,16 +41,24 @@ def start_scheduler():
 
     if frequency == "daily":
         schedule_lib.every().day.at(run_time).do(job)
+
     elif frequency == "weekly":
         schedule_lib.every().monday.at(run_time).do(job)
+
     elif frequency == "monthly":
-        # 'schedule' library monthly support nahi karti, isliye har din check karke
-        # month ka 1st din run karte hain
+        # The 'schedule' library does not support monthly scheduling,
+        # so the job runs daily and executes only on the first day of the month.
         schedule_lib.every().day.at(run_time).do(
-            lambda: job() if __import__("datetime").date.today().day == 1 else None
+            lambda: job()
+            if __import__("datetime").date.today().day == 1
+            else None
         )
 
-    print(f"Scheduler shuru ho gaya: {frequency} at {run_time}. Ctrl+C se rokein.")
+    print(
+        f"Scheduler started: {frequency} at {run_time}. "
+        "Press Ctrl+C to stop."
+    )
+
     while True:
         schedule_lib.run_pending()
         time.sleep(30)
