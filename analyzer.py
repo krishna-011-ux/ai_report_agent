@@ -1,11 +1,11 @@
 """
 AI Analyzer
 -----------
-Cleaned data ka statistical summary banata hai aur Claude API
-ko bhejkar human-readable insights, trends/anomalies aur
-business recommendations generate karta hai.
+Generates a statistical summary of the cleaned dataset and sends it
+to the Claude API to generate human-readable insights, trends,
+anomalies, and business recommendations.
 
-ANTHROPIC_API_KEY environment variable mein set hona chahiye.
+The ANTHROPIC_API_KEY environment variable must be configured.
 """
 
 import os
@@ -14,7 +14,7 @@ import pandas as pd
 
 
 def _build_data_summary(df: pd.DataFrame) -> str:
-    """DataFrame ka compact statistical summary banata hai."""
+    """Build a compact statistical summary of the DataFrame."""
 
     summary_parts = []
 
@@ -36,7 +36,9 @@ def _build_data_summary(df: pd.DataFrame) -> str:
         )
 
     # Categorical columns
-    categorical_cols = df.select_dtypes(include="object").columns.tolist()
+    categorical_cols = df.select_dtypes(
+        include="object"
+    ).columns.tolist()
 
     for col in categorical_cols[:5]:
         top_values = (
@@ -70,7 +72,7 @@ def generate_insights(
     ai_config: dict
 ) -> dict:
     """
-    Dataset ke liye AI insights generate karta hai.
+    Generate AI-powered insights for the dataset.
 
     Returns:
         {
@@ -80,36 +82,36 @@ def generate_insights(
         }
     """
 
-    # AI disabled
+    # Check whether AI analysis is enabled.
     if not ai_config.get("enabled", True):
         return {
-            "summary": "AI analysis disabled in config.",
+            "summary": "AI analysis is disabled in the configuration.",
             "insights": [],
             "recommendations": []
         }
 
-    # API key check
+    # Check for the Anthropic API key.
     api_key = os.environ.get("ANTHROPIC_API_KEY")
 
     if not api_key:
         print(
-            "[AI Analyzer] WARNING: ANTHROPIC_API_KEY nahi mili. "
-            "Fallback statistical summary use ho raha hai."
+            "[AI Analyzer] WARNING: ANTHROPIC_API_KEY was not found. "
+            "Using the fallback statistical summary."
         )
 
         return _fallback_summary(df)
 
-    # Anthropic package check
+    # Check whether the Anthropic package is installed.
     try:
         import anthropic
     except ImportError:
         print(
-            "[AI Analyzer] 'anthropic' package installed nahi hai."
+            "[AI Analyzer] The 'anthropic' package is not installed."
         )
 
         return _fallback_summary(df)
 
-    # Dataset summary
+    # Build the dataset summary.
     data_summary = _build_data_summary(df)
 
     domain_hint = ai_config.get(
@@ -127,11 +129,11 @@ def generate_insights(
         "claude-sonnet-4-6"
     )
 
-    # Prompt
+    # Build the AI prompt.
     prompt = f"""
-Tum ek business data analyst AI agent ho.
+You are an AI business data analyst.
 
-Neeche dataset ka statistical summary diya gaya hai.
+The statistical summary of the dataset is provided below.
 
 Domain:
 {domain_hint}
@@ -139,8 +141,8 @@ Domain:
 Dataset Summary:
 {data_summary}
 
-Mujhe STRICT JSON format mein jawab do.
-Koi extra text nahi, sirf JSON.
+Return the response in STRICT JSON format.
+Do not include any additional text, only valid JSON.
 
 Format:
 
@@ -156,19 +158,19 @@ Format:
     ]
 }}
 
-Maximum {max_insights} insights do.
+Provide a maximum of {max_insights} insights.
 
-Insights:
-- Specific hone chahiye
-- Numbers-based hone chahiye
-- Actionable hone chahiye
-- Dataset ke actual data par based hone chahiye
+Insights should:
+- Be specific
+- Be supported by numerical data
+- Be actionable
+- Be based on the actual dataset
 
-Generic baatein mat likho.
+Do not provide generic statements.
 """
 
     try:
-        # Claude client
+        # Initialize the Claude client.
         client = anthropic.Anthropic(
             api_key=api_key
         )
@@ -190,7 +192,7 @@ Generic baatein mat likho.
 
         raw_text = response.content[0].text.strip()
 
-        # Markdown code block remove
+        # Remove Markdown code blocks if present.
         raw_text = (
             raw_text
             .replace("```json", "")
@@ -198,13 +200,13 @@ Generic baatein mat likho.
             .strip()
         )
 
-        # JSON parse
+        # Parse the JSON response.
         try:
             result = json.loads(raw_text)
 
         except json.JSONDecodeError:
             print(
-                "[AI Analyzer] JSON parse fail hua."
+                "[AI Analyzer] Failed to parse the AI response as JSON."
             )
 
             result = {
@@ -225,8 +227,8 @@ Generic baatein mat likho.
 
 def _fallback_summary(df: pd.DataFrame) -> dict:
     """
-    Agar Claude API available nahi hai to
-    basic statistical insights provide karta hai.
+    Provide basic statistical insights when the Claude API
+    is unavailable.
     """
 
     insights = []
@@ -237,28 +239,28 @@ def _fallback_summary(df: pd.DataFrame) -> dict:
 
     for col in numeric_cols[:4]:
 
-        # NaN handling
+        # Calculate basic statistics.
         mean_value = df[col].mean()
         max_value = df[col].max()
         min_value = df[col].min()
 
         insights.append(
-            f"'{col}' ka average = {mean_value:.2f}, "
-            f"max = {max_value:.2f}, "
-            f"min = {min_value:.2f}"
+            f"'{col}' average = {mean_value:.2f}, "
+            f"maximum = {max_value:.2f}, "
+            f"minimum = {min_value:.2f}"
         )
 
     return {
         "summary": (
-            f"Dataset mein {len(df)} rows aur "
-            f"{len(df.columns)} columns hain. "
-            "Ye basic statistical summary hai."
+            f"The dataset contains {len(df)} rows and "
+            f"{len(df.columns)} columns. "
+            "This is a basic statistical summary."
         ),
 
         "insights": insights,
 
         "recommendations": [
-            "Deeper AI insights ke liye "
-            "ANTHROPIC_API_KEY set karein."
+            "Configure the ANTHROPIC_API_KEY to generate "
+            "deeper AI-powered insights."
         ]
     }
