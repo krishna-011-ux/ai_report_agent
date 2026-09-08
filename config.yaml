@@ -1,22 +1,26 @@
 # =========================================================
 # AI Report Agent - Master Configuration
-# Yahan aap batate ho: data kahan se aayega, aur report kaise/kahan jayegi
+# Configure the data source, processing settings, report output,
+# delivery options, and automation schedule.
 # =========================================================
 
+
 # ---------- DATA SOURCE ----------
-# source_type options: csv, excel, sql, api, gsheet
+# Available source types: csv, excel, sql, api, gsheet
+
 data_source:
-  source_type: "csv"          # <-- yahan change karo: csv / excel / sql / api / gsheet
+  source_type: "csv"          # Options: csv / excel / sql / api / gsheet
 
   csv:
     path: "sample_data/sample_sales.csv"
 
   excel:
     path: "sample_data/sample_sales.xlsx"
-    sheet_name: 0              # sheet index ya naam
+    sheet_name: 0              # Sheet index or sheet name
 
   sql:
-    # SQLite demo ke liye; production mein postgres/mysql connection string do
+    # SQLite is used for demonstration.
+    # For production, provide a PostgreSQL or MySQL connection string.
     connection_string: "sqlite:///sample_data/sample_sales.db"
     query: "SELECT * FROM sales"
 
@@ -26,12 +30,15 @@ data_source:
     headers:
       Authorization: "Bearer YOUR_API_TOKEN"
     params: {}
-    json_path: null           # agar response nested hai, e.g. "data.records"
+    # Specify the JSON path if the API response contains nested data.
+    # Example: "data.records"
+    json_path: null
 
   gsheet:
     sheet_id: "YOUR_GOOGLE_SHEET_ID"
     worksheet_name: "Sheet1"
-    credentials_file: "config/gcreds.json"   # Google service account JSON
+    credentials_file: "config/gcreds.json"   # Google Service Account JSON file
+
 
 # ---------- DATA CLEANING ----------
 cleaning:
@@ -40,28 +47,39 @@ cleaning:
   fill_missing_text_with: "Unknown"
   date_columns: ["date"]
 
+
 # ---------- AI ANALYSIS ----------
 ai_agent:
   enabled: true
   model: "claude-sonnet-4-6"
-  # Kis business context mein data hai - agent isse insights better banayega
+
+  # Specify the business context of the dataset to help
+  # the AI agent generate more relevant insights.
   domain_hint: "sales and revenue data across regions and products"
+
   max_insights: 6
+
 
 # ---------- REPORT OUTPUT ----------
 report:
-  formats: ["pdf", "excel"]     # options: pdf, excel, both hi likh sakte ho list mein
+  # Available formats: pdf, excel, or both.
+  formats: ["pdf", "excel"]
+
   title: "Automated Business Report"
+
   output_dir: "outputs"
+
   charts:
     - type: "bar"
       x: "region"
       y: "revenue"
       title: "Revenue by Region"
+
     - type: "line"
       x: "date"
       y: "revenue"
       title: "Revenue Trend Over Time"
+
 
 # ---------- DELIVERY ----------
 delivery:
@@ -74,8 +92,11 @@ delivery:
     recipients: ["client@example.com"]
     subject: "Your Automated Report"
 
-# ---------- SCHEDULE (agar automation chahiye) ----------
+
+# ---------- SCHEDULE ----------
+# Enable this section if automated report generation is required.
+
 schedule:
   enabled: false
-  frequency: "daily"     # daily / weekly / monthly
+  frequency: "daily"     # Options: daily / weekly / monthly
   time: "09:00"
