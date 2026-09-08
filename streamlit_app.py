@@ -2,9 +2,11 @@
 =================================================================
 AI Report Agent - Streamlit Web App
 =================================================================
-Ye ek web interface hai jisse koi bhi non-technical user
-browser mein file upload karke automatically AI-powered report
-bana sakta hai.
+A user-friendly web interface that allows users to upload data
+files and automatically generate AI-powered business reports.
+
+Users can upload CSV or Excel files, connect to SQL databases,
+or fetch data from REST APIs.
 
 Run locally:
     streamlit run streamlit_app.py
@@ -17,10 +19,8 @@ import os
 import tempfile
 
 # ===============================================================
-# Local imports
+# Local Imports
 # ===============================================================
-# Tumhari files root folder mein hain, isliye folder prefix nahi
-# lagana hai.
 from cleaner import clean_data
 from analyzer import generate_insights
 from excel_report import generate_excel_report
@@ -43,9 +43,9 @@ st.set_page_config(
 st.sidebar.title("⚙️ Settings")
 
 api_key_input = st.sidebar.text_input(
-    "Anthropic API Key (AI insights ke liye)",
+    "Anthropic API Key",
     type="password",
-    help="Agar khali chhodoge to basic statistical summary milega.",
+    help="Enter your Anthropic API key to enable AI-powered insights.",
     value=os.environ.get("ANTHROPIC_API_KEY", ""),
 )
 
@@ -60,7 +60,7 @@ report_title = st.sidebar.text_input(
 
 
 domain_hint = st.sidebar.text_input(
-    "Data kis domain ka hai? (AI ko context milega)",
+    "Data Domain",
     value="general business data",
     placeholder="e.g. sales data, HR attendance, finance expenses..."
 )
@@ -76,27 +76,30 @@ output_formats = st.sidebar.multiselect(
 st.sidebar.markdown("---")
 
 st.sidebar.caption(
-    "💡 Data server par permanently save nahi hota — "
-    "sirf current session ke liye process hota hai."
+    "💡 Uploaded data is processed only during the current session "
+    "and is not permanently stored on the server."
 )
 
 
 # ===============================================================
 # Main Area
 # ===============================================================
-st.title("📊 AI Agent — Automated Data Pipeline & Report Generation")
+st.title(
+    "📊 AI Report Agent — Automated Data Pipeline & Report Generation"
+)
 
 st.write(
-    "Apna data upload karo (CSV ya Excel), aur AI khud analyze karke "
-    "professional PDF/Excel report bana dega — insights aur charts ke saath."
+    "Upload your dataset or connect to a SQL database or REST API. "
+    "The system will analyze your data and generate professional "
+    "reports with insights and visualizations."
 )
 
 
 # ===============================================================
-# Tabs
+# Data Source Tabs
 # ===============================================================
 source_tab, sql_tab, api_tab = st.tabs(
-    ["📁 File Upload", "🗄️ Database (SQL)", "🌐 API"]
+    ["📁 File Upload", "🗄️ Database (SQL)", "🌐 REST API"]
 )
 
 
@@ -109,7 +112,7 @@ df = None
 with source_tab:
 
     uploaded_file = st.file_uploader(
-        "CSV ya Excel file upload karo",
+        "Upload a CSV or Excel file",
         type=["csv", "xlsx", "xls"]
     )
 
@@ -119,18 +122,18 @@ with source_tab:
 
             if uploaded_file.name.lower().endswith(".csv"):
                 df = pd.read_csv(uploaded_file)
-
             else:
                 df = pd.read_excel(uploaded_file)
 
             st.success(
-                f"✅ {len(df)} rows, {len(df.columns)} columns load hui."
+                f"✅ Successfully loaded {len(df)} rows "
+                f"and {len(df.columns)} columns."
             )
 
         except Exception as e:
 
             st.error(
-                f"File padhne mein error: {e}"
+                f"❌ Unable to read the uploaded file: {e}"
             )
 
 
@@ -140,8 +143,8 @@ with source_tab:
 with sql_tab:
 
     st.caption(
-        "Connection string aur query dekar apne database se "
-        "seedha data lao."
+        "Connect to your database using a connection string "
+        "and SQL query."
     )
 
     conn_str = st.text_input(
@@ -156,16 +159,18 @@ with sql_tab:
         key="sql_query"
     )
 
-    if st.button("Database se Data Lao"):
+    if st.button("Load Data from Database"):
 
         try:
 
             from sqlalchemy import create_engine
 
             if not conn_str:
-                st.error("❌ Connection String enter karo.")
+                st.error("❌ Please enter a connection string.")
+
             elif not sql_query:
-                st.error("❌ SQL Query enter karo.")
+                st.error("❌ Please enter a SQL query.")
+
             else:
 
                 engine = create_engine(conn_str)
@@ -178,23 +183,24 @@ with sql_tab:
                     )
 
                 st.success(
-                    f"✅ {len(df)} rows database se aayi."
+                    f"✅ Successfully retrieved {len(df)} rows "
+                    "from the database."
                 )
 
         except Exception as e:
 
             st.error(
-                f"Database connection error: {e}"
+                f"❌ Database connection error: {e}"
             )
 
 
 # ===============================================================
-# API
+# REST API
 # ===============================================================
 with api_tab:
 
     st.caption(
-        "Kisi bhi REST API se JSON data lao."
+        "Fetch JSON data from any compatible REST API."
     )
 
     api_url = st.text_input(
@@ -203,24 +209,29 @@ with api_tab:
     )
 
     api_token = st.text_input(
-        "Authorization Token (optional)",
+        "Authorization Token (Optional)",
         type="password",
         key="api_token"
     )
 
-    if st.button("API se Data Lao"):
+    if st.button("Load Data from API"):
 
         try:
 
             import requests
 
             if not api_url:
-                st.error("❌ API URL enter karo.")
+
+                st.error(
+                    "❌ Please enter an API URL."
+                )
+
             else:
 
                 headers = {}
 
                 if api_token:
+
                     headers = {
                         "Authorization": f"Bearer {api_token}"
                     }
@@ -238,18 +249,19 @@ with api_tab:
                 df = pd.json_normalize(data)
 
                 st.success(
-                    f"✅ {len(df)} rows API se aayi."
+                    f"✅ Successfully retrieved {len(df)} rows "
+                    "from the API."
                 )
 
         except Exception as e:
 
             st.error(
-                f"API call error: {e}"
+                f"❌ API request error: {e}"
             )
 
 
 # ===============================================================
-# Data Preview + Pipeline
+# Data Preview and Report Pipeline
 # ===============================================================
 if df is not None and not df.empty:
 
@@ -262,9 +274,11 @@ if df is not None and not df.empty:
 
 
     # ===========================================================
-    # Chart Setup
+    # Chart Configuration
     # ===========================================================
-    st.markdown("### 📈 Quick Chart Setup (optional)")
+    st.markdown(
+        "### 📈 Chart Configuration (Optional)"
+    )
 
     col1, col2 = st.columns(2)
 
@@ -278,7 +292,7 @@ if df is not None and not df.empty:
     with col1:
 
         chart_x = st.selectbox(
-            "Chart X-axis (category/date column)",
+            "X-axis (Category or Date)",
             options=[None] + all_cols
         )
 
@@ -286,7 +300,7 @@ if df is not None and not df.empty:
     with col2:
 
         chart_y = st.selectbox(
-            "Chart Y-axis (numeric column)",
+            "Y-axis (Numeric Value)",
             options=[None] + numeric_cols
         )
 
@@ -295,7 +309,7 @@ if df is not None and not df.empty:
     # Generate Report
     # ===========================================================
     if st.button(
-        "🚀 Report Generate Karo",
+        "🚀 Generate Report",
         type="primary"
     ):
 
@@ -303,7 +317,7 @@ if df is not None and not df.empty:
         # Data Cleaning
         # -------------------------------------------------------
         with st.spinner(
-            "Data clean ho raha hai..."
+            "Cleaning and preparing your data..."
         ):
 
             cleaning_config = {
@@ -323,7 +337,7 @@ if df is not None and not df.empty:
             except Exception as e:
 
                 st.error(
-                    f"❌ Data cleaning error: {e}"
+                    f"❌ Data cleaning failed: {e}"
                 )
 
                 st.stop()
@@ -333,7 +347,7 @@ if df is not None and not df.empty:
         # AI Analysis
         # -------------------------------------------------------
         with st.spinner(
-            "AI insights generate ho rahe hain..."
+            "Generating AI-powered insights..."
         ):
 
             ai_config = {
@@ -353,14 +367,14 @@ if df is not None and not df.empty:
             except Exception as e:
 
                 st.error(
-                    f"❌ AI analysis error: {e}"
+                    f"❌ AI analysis failed: {e}"
                 )
 
                 st.stop()
 
 
         # -------------------------------------------------------
-        # Show Insights
+        # Display Insights
         # -------------------------------------------------------
         st.markdown("### 🧠 AI Insights")
 
@@ -374,7 +388,7 @@ if df is not None and not df.empty:
 
         if insights.get("insights"):
 
-            st.markdown("**Key Insights:**")
+            st.markdown("**Key Insights**")
 
             for point in insights["insights"]:
 
@@ -385,7 +399,7 @@ if df is not None and not df.empty:
 
         if insights.get("recommendations"):
 
-            st.markdown("**Recommendations:**")
+            st.markdown("**Recommendations**")
 
             for rec in insights["recommendations"]:
 
@@ -426,12 +440,12 @@ if df is not None and not df.empty:
 
 
             # ---------------------------------------------------
-            # PDF
+            # PDF Report
             # ---------------------------------------------------
             if "PDF" in output_formats:
 
                 with st.spinner(
-                    "PDF ban raha hai..."
+                    "Generating PDF report..."
                 ):
 
                     try:
@@ -457,17 +471,17 @@ if df is not None and not df.empty:
                     except Exception as e:
 
                         st.error(
-                            f"❌ PDF generate karne mein error: {e}"
+                            f"❌ PDF generation failed: {e}"
                         )
 
 
             # ---------------------------------------------------
-            # Excel
+            # Excel Report
             # ---------------------------------------------------
             if "Excel" in output_formats:
 
                 with st.spinner(
-                    "Excel ban raha hai..."
+                    "Generating Excel report..."
                 ):
 
                     try:
@@ -487,24 +501,27 @@ if df is not None and not df.empty:
                                 "⬇️ Download Excel Report",
                                 data=f.read(),
                                 file_name="report.xlsx",
-                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                mime=(
+                                    "application/vnd.openxmlformats-"
+                                    "officedocument.spreadsheetml.sheet"
+                                ),
                             )
 
                     except Exception as e:
 
                         st.error(
-                            f"❌ Excel generate karne mein error: {e}"
+                            f"❌ Excel generation failed: {e}"
                         )
 
 
         st.success(
-            "✅ Report ready hai! Upar se download karo."
+            "✅ Your report is ready. Download it using the buttons above."
         )
 
 
 else:
 
-   st.info(
-    "📊 Get started by uploading your dataset, or connect a SQL database "
-    "or REST API to generate insights and reports."
-)
+    st.info(
+        "📊 Get started by uploading your dataset, or connect a "
+        "SQL database or REST API to generate insights and reports."
+    )
