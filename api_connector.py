@@ -1,7 +1,11 @@
 """
-API Connector - kisi bhi REST API se JSON data leke DataFrame banata hai.
-Nested JSON ke liye 'json_path' config diya ja sakta hai
-(e.g. "data.records" agar response {"data": {"records": [...]}} jaisa ho)
+API Connector
+-------------
+Fetches JSON data from a REST API and converts it into a Pandas DataFrame.
+
+For nested JSON responses, a 'json_path' can be specified in the configuration.
+For example, use "data.records" if the API response has a structure like:
+{"data": {"records": [...]}}
 """
 
 import requests
@@ -19,11 +23,19 @@ class APIConnector(BaseConnector):
         json_path = cfg.get("json_path")
 
         print(f"[APIConnector] Calling {method} {url}")
-        response = requests.request(method, url, headers=headers, params=params, timeout=30)
+
+        response = requests.request(
+            method,
+            url,
+            headers=headers,
+            params=params,
+            timeout=30
+        )
+
         response.raise_for_status()
         data = response.json()
 
-        # Agar data nested hai to json_path follow karke andar jao
+        # Follow the configured JSON path for nested API responses.
         if json_path:
             for key in json_path.split("."):
                 data = data[key]
