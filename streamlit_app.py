@@ -504,7 +504,7 @@ if df is not None and not df.empty:
 
 else:
 
-    st.info(
-        "👆 Shuru karne ke liye upar se file upload karo, "
-        "ya SQL/API tab use karo."
-    )
+   st.info(
+    "📊 Get started by uploading your dataset, or connect a SQL database "
+    "or REST API to generate insights and reports."
+)
