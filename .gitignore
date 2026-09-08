@@ -1,0 +1,21 @@
+# Sensitive files
+config/gcreds.json
+*.env
+.env
+
+# Generated outputs
+outputs/*.pdf
+outputs/*.xlsx
+*.db
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# OS
+.DS_Store

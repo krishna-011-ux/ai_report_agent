@@ -1,0 +1,12 @@
+pandas
+openpyxl
+reportlab
+matplotlib
+requests
+sqlalchemy
+pyyaml
+anthropic
+gspread
+google-auth
+schedule
+streamlit
